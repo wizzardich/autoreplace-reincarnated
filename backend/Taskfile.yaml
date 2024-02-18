@@ -8,3 +8,11 @@ tasks:
   run:
     cmds:
       - go run ./...
+
+  tidy:
+    cmds:
+      - go mod tidy
+
+  vet:
+    cmds:
+      - go vet ./...
