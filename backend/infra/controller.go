@@ -34,11 +34,20 @@ func (c *Controller) ListTemplates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templateIDs := make([]dto.TemplateIdentifier, len(templates))
+	templateIDs := make([]dto.Template, len(templates))
 	for i, t := range templates {
-		templateIDs[i] = dto.TemplateIdentifier{
-			ID:   t.ID,
-			Name: t.Name,
+		replacements := make([]dto.Replacement, len(t.Replacements))
+		for _, r := range t.Replacements {
+			replacements = append(replacements, dto.Replacement{
+				From: r.From,
+				To:   r.To,
+			})
+		}
+
+		templateIDs[i] = dto.Template{
+			ID:           t.ID,
+			Name:         t.Name,
+			Replacements: replacements,
 		}
 	}
 
