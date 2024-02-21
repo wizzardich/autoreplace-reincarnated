@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/wizzardich/autoreplace-reincarnated/domain"
+import (
+	"github.com/wizzardich/autoreplace-reincarnated/domain"
+)
 
 type Replacement struct {
 	From string `bson:"from" json:"from"`
