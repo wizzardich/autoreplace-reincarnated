@@ -1,4 +1,4 @@
-class Replacement {
+export class Replacement {
     from: string;
     to: string;
 
@@ -8,7 +8,7 @@ class Replacement {
     }
 }
 
-class Template {
+export class Template {
     id: string;
     name: string;
     replacements: Replacement[];

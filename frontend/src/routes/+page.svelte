@@ -1,36 +1,82 @@
 <script lang="ts">
-	import { Select, Label, Textarea } from 'flowbite-svelte';
-	import type { ActionData, PageData } from './$types';
+	import {
+		AccordionItem,
+		Accordion,
+		Label,
+		Textarea,
+		Button,
+		Table,
+		TableBody,
+		TableBodyCell,
+		TableBodyRow,
+		TableHead,
+		TableHeadCell,
+		Hr
+	} from 'flowbite-svelte';
+	import type { PageData } from './$types';
+	import type { Template } from '$lib/backend/autoreplace';
 
 	export let data: PageData;
-	let options = data.templates.map((t) => ({ value: t.id, name: t.name }));
+	let selection = data.templates.map((_, id) => (id == 0 ? true : false));
+	$: selected = data.templates[0].id;
+	let content = '';
+	$: processedContent = replaceText(
+		content,
+		data.templates.find((t) => t.id === selected)
+	);
 
-	function getTemplateContent(id: string) {
-		let template = data.templates.find((t) => t.id === id);
-		console.log(data.templates);
-		if (!template) return '';
-
-		let reprMap = template.replacements.map((r) => r.from + ' -- ' + r.to);
-		return reprMap.join('\n');
+	function replaceText(input: string, template: Template | undefined) {
+		console.log('input', input);
+		if (!template) return input;
+		let output = input;
+		for (const replacement of template.replacements) {
+			output = output.replaceAll(replacement.from, replacement.to);
+		}
+		return output;
 	}
-
-	let selected = options[0].value;
-	$: content = getTemplateContent(selected);
 </script>
 
-<div class="centered">
-	<form action="?/loadTemplate" method="POST">
-		<Label for="template-selector">Select an option</Label>
-		<Select name="template-id" class="mt-2" items={options} bind:value={selected} />
-		<br />
-		<Label for="current-template">Current Template</Label>
-		<Textarea id="current-template" placeholder="Current Template" rows="4" bind:value={content} />
-	</form>
+<div class="grid grid-flow-col grid-cols-3 grid-rows-3 gap-4">
+	<div class="max-w-50 row-span-3">
+		<Accordion>
+			<!-- for each template, provide the corresponding application element -->
+			{#each data.templates as template, index}
+				<AccordionItem bind:open={selection[index]}>
+					<span slot="header">{template.name}</span>
+					<Table striped={true}>
+						<TableHead>
+							<TableHeadCell>Match</TableHeadCell>
+							<TableHeadCell>Replace with</TableHeadCell>
+						</TableHead>
+						<TableBody tableBodyClass="divide-y">
+							{#each template.replacements as replacement}
+								<TableBodyRow>
+									<TableBodyCell>
+										{replacement.from}
+									</TableBodyCell>
+									<TableBodyCell>
+										{replacement.to}
+									</TableBodyCell>
+								</TableBodyRow>
+							{/each}
+						</TableBody>
+					</Table>
+					<Button class="mt-4 self-center" on:click={() => (selected = template.id)}>Replace</Button
+					>
+				</AccordionItem>
+			{/each}
+		</Accordion>
+	</div>
+	<div class="col-span-2 row-span-2">
+		<Label for="input-text" class="mb-2 font-semibold">Text to process</Label>
+		<Textarea id="input-text" placeholder="Text to process" rows="20" bind:value={content} />
+		<Hr />
+		<Label for="processed-text" class="mb-2 font-semibold">Text with replacements:</Label>
+		<Textarea
+			id="processed-text"
+			placeholder="Processed text"
+			rows="20"
+			bind:value={processedContent}
+		/>
+	</div>
 </div>
-
-<style>
-	.centered {
-		max-width: 20em;
-		margin: 0 auto;
-	}
-</style>
