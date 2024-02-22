@@ -192,3 +192,44 @@ func (repo *TemplateMongoRepository) UpdateTemplate(id string, template domain.T
 
 	return nil
 }
+
+func (repo *TemplateMongoRepository) DeleteTemplate(id string) error {
+	querier := func(collection *mongo.Collection, ctx *context.Context) error {
+		objectID, err := primitive.ObjectIDFromHex(id)
+
+		filter := bson.M{"_id": objectID}
+		if err != nil {
+			repo.logger.Warn("could not convert the id to an ObjectID",
+				slog.String("id", id),
+				slog.String("error", err.Error()),
+			)
+			// not that I especially like the fallback here...
+			filter = bson.M{"_id": id}
+		}
+
+		deletionResult, err := collection.DeleteOne(*ctx, filter)
+
+		if deletionResult.DeletedCount == 0 {
+			repo.logger.Error("template not found")
+			return domain.ErrTemplateNotFound
+		}
+
+		if err != nil {
+			repo.logger.Error("could not delete the template from the database",
+				slog.String("id", id),
+				slog.String("error", err.Error()),
+			)
+			return err
+		}
+
+		return nil
+	}
+
+	err := repo.driver.Process(querier)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

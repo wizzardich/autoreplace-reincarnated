@@ -16,6 +16,7 @@ type Controller struct {
 	retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase
 	storeTemplateUsecase     *app.StoreTemplateUsecase
 	updateTemplateUsecase    *app.UpdateTemplateUsecase
+	deleteTemplateUsecase    *app.DeleteTemplateUsecase
 }
 
 func NewController(
@@ -24,6 +25,7 @@ func NewController(
 	retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase,
 	storeTemplateUsecase *app.StoreTemplateUsecase,
 	updateTemplateUsecase *app.UpdateTemplateUsecase,
+	deleteTemplateUsecase *app.DeleteTemplateUsecase,
 ) *Controller {
 	return &Controller{
 		logger:                   logger,
@@ -31,6 +33,7 @@ func NewController(
 		retrieveTemplatesUsecase: retrieveTemplatesUsecase,
 		storeTemplateUsecase:     storeTemplateUsecase,
 		updateTemplateUsecase:    updateTemplateUsecase,
+		deleteTemplateUsecase:    deleteTemplateUsecase,
 	}
 }
 
@@ -153,4 +156,33 @@ func (c *Controller) UpdateTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("DeleteTemplate", util.FullRequest(r))
+	id := r.PathValue("id")
+
+	if id == "" {
+		c.logger.Error("invalid template ID")
+		http.Error(w, "empty template id", http.StatusBadRequest)
+		return
+	}
+
+	err := c.deleteTemplateUsecase.Execute(id)
+
+	if err == domain.ErrTemplateNotFound {
+		c.logger.Warn("template not found", slog.String("id", id))
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		c.logger.Error("could not delete template",
+			slog.String("error", err.Error()),
+		)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
