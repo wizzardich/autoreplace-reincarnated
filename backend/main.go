@@ -25,11 +25,13 @@ func main() {
 		app.NewFindTemplateByIDUsecase(logger, mongoTemplateRepository),
 		app.NewRetrieveTemplatesUsecase(logger, mongoTemplateRepository),
 		app.NewStoreTemplateUsecase(logger, mongoTemplateRepository),
+		app.NewUpdateTemplateUsecase(logger, mongoTemplateRepository),
 	)
 
 	mux.HandleFunc("GET /templates/", controller.ListTemplates)
 	mux.HandleFunc("GET /templates/{id}", controller.GetTemplateByID)
 	mux.HandleFunc("POST /templates/", controller.StoreTemplate)
+	mux.HandleFunc("PUT /templates/{id}", controller.UpdateTemplate)
 
 	logger.Info("server starting at :8090")
 	http.ListenAndServe("localhost:8090", mux)

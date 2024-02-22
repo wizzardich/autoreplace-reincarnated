@@ -23,4 +23,5 @@ type TemplateRepository interface {
 	FindByName(name string) (Template, error)
 	FindByID(id string) (Template, error)
 	StoreTemplate(template Template) error
+	UpdateTemplate(id string, updateTemplate Template) error
 }

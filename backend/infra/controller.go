@@ -15,6 +15,7 @@ type Controller struct {
 	findTemplateByIDUsecase  *app.FindTemplateByIDUsecase
 	retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase
 	storeTemplateUsecase     *app.StoreTemplateUsecase
+	updateTemplateUsecase    *app.UpdateTemplateUsecase
 }
 
 func NewController(
@@ -22,12 +23,14 @@ func NewController(
 	findTemplateByIDUsecase *app.FindTemplateByIDUsecase,
 	retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase,
 	storeTemplateUsecase *app.StoreTemplateUsecase,
+	updateTemplateUsecase *app.UpdateTemplateUsecase,
 ) *Controller {
 	return &Controller{
 		logger:                   logger,
 		findTemplateByIDUsecase:  findTemplateByIDUsecase,
 		retrieveTemplatesUsecase: retrieveTemplatesUsecase,
 		storeTemplateUsecase:     storeTemplateUsecase,
+		updateTemplateUsecase:    updateTemplateUsecase,
 	}
 }
 
@@ -118,4 +121,36 @@ func (c *Controller) StoreTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (c *Controller) UpdateTemplate(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("UpdateTemplate", util.FullRequest(r))
+	id := r.PathValue("id")
+	template, err := util.ReadJSON[dto.Template](r)
+
+	if err != nil {
+		c.logger.Error("could not read template",
+			slog.String("error", err.Error()),
+		)
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+
+	err = c.updateTemplateUsecase.Execute(id, dto.TemplateFromDTO(template))
+
+	if err == domain.ErrTemplateNotFound {
+		c.logger.Warn("template not found", slog.String("id", id))
+		http.Error(w, "template not found", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		c.logger.Error("could not update template",
+			slog.String("error", err.Error()),
+		)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
