@@ -14,13 +14,20 @@ type Controller struct {
 	logger                   *slog.Logger
 	findTemplateByIDUsecase  *app.FindTemplateByIDUsecase
 	retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase
+	storeTemplateUsecase     *app.StoreTemplateUsecase
 }
 
-func NewController(logger *slog.Logger, findTemplateByIDUsecase *app.FindTemplateByIDUsecase, retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase) *Controller {
+func NewController(
+	logger *slog.Logger,
+	findTemplateByIDUsecase *app.FindTemplateByIDUsecase,
+	retrieveTemplatesUsecase *app.RetrieveTemplatesUsecase,
+	storeTemplateUsecase *app.StoreTemplateUsecase,
+) *Controller {
 	return &Controller{
 		logger:                   logger,
 		findTemplateByIDUsecase:  findTemplateByIDUsecase,
 		retrieveTemplatesUsecase: retrieveTemplatesUsecase,
+		storeTemplateUsecase:     storeTemplateUsecase,
 	}
 }
 
@@ -80,4 +87,35 @@ func (c *Controller) GetTemplateByID(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	util.WriteJSON(w, dto.TemplateToDTO(*template))
+}
+
+func (c *Controller) StoreTemplate(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("StoreTemplate", util.FullRequest(r))
+	template, err := util.ReadJSON[dto.Template](r)
+
+	if err != nil {
+		c.logger.Error("could not read template",
+			slog.String("error", err.Error()),
+		)
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+
+	err = c.storeTemplateUsecase.Execute(dto.TemplateFromDTO(template))
+
+	if err == domain.ErrTemplateAlreadyExists {
+		c.logger.Warn("template already exists", slog.String("template", template.Name))
+		http.Error(w, "template already exists", http.StatusConflict)
+		return
+	}
+
+	if err != nil {
+		c.logger.Error("could not store template",
+			slog.String("error", err.Error()),
+		)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }

@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/wizzardich/autoreplace-reincarnated/domain"
@@ -110,4 +111,29 @@ func (repo *TemplateMongoRepository) FindByID(id string) (domain.Template, error
 	}
 
 	return dto.TemplateFromDTO(result), nil
+}
+
+func (repo *TemplateMongoRepository) StoreTemplate(template domain.Template) error {
+	var dtoTemplate = dto.TemplateToDTO(template)
+
+	querier := func(collection *mongo.Collection, ctx *context.Context) error {
+		_, err := collection.InsertOne(*ctx, dtoTemplate)
+
+		if err != nil {
+			repo.logger.Error("could not insert the template from the database",
+				slog.String("template", fmt.Sprintf("%v", dtoTemplate)),
+				slog.String("error", err.Error()),
+			)
+		}
+
+		return err
+	}
+
+	err := repo.driver.Process(querier)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

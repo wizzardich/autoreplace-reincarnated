@@ -14,8 +14,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	loggerOpts := &slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
+		Level: slog.LevelDebug,
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, loggerOpts))
 	mongoDriver := inframongo.NewMongoDriver(logger, "localhost")
@@ -25,10 +24,12 @@ func main() {
 		logger,
 		app.NewFindTemplateByIDUsecase(logger, mongoTemplateRepository),
 		app.NewRetrieveTemplatesUsecase(logger, mongoTemplateRepository),
+		app.NewStoreTemplateUsecase(logger, mongoTemplateRepository),
 	)
 
 	mux.HandleFunc("GET /templates/", controller.ListTemplates)
 	mux.HandleFunc("GET /templates/{id}", controller.GetTemplateByID)
+	mux.HandleFunc("POST /templates/", controller.StoreTemplate)
 
 	logger.Info("server starting at :8090")
 	http.ListenAndServe("localhost:8090", mux)

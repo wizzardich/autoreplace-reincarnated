@@ -2,7 +2,10 @@ package domain
 
 import "errors"
 
-var ErrTemplateNotFound = errors.New("template not found")
+var (
+	ErrTemplateNotFound      = errors.New("template not found")
+	ErrTemplateAlreadyExists = errors.New("template already exists")
+)
 
 type Replacement struct {
 	From string
@@ -19,4 +22,5 @@ type TemplateRepository interface {
 	FindAll() ([]Template, error)
 	FindByName(name string) (Template, error)
 	FindByID(id string) (Template, error)
+	StoreTemplate(template Template) error
 }
