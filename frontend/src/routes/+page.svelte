@@ -36,12 +36,9 @@
 	let selection = data.templates.map((_, id) => (id == 0 ? true : false));
 	let content = '';
 
-	let selected = data.templates[0].id;
-	$: selectedTemplate = data.templates.find((t) => t.id === selected);
-	$: processedContent = replaceText(
-		content,
-		data.templates.find((t) => t.id === selected)
-	);
+	let selected = 0;
+	$: selectedTemplate = data.templates[selected];
+	$: processedContent = replaceText(content, selectedTemplate);
 
 	let editable = 0;
 	$: editableTemplate = data.templates[editable];
@@ -100,7 +97,7 @@
 				<AccordionItem bind:open={selection[index]}>
 					<span slot="header">
 						{template.name}
-						{#if template.id == selected}
+						{#if index == selected}
 							<b class="text-primary-500 dark:text-primary-400">active</b>
 						{/if}
 					</span>
@@ -123,7 +120,7 @@
 						</TableBody>
 					</Table>
 					<div class="grid grid-flow-col justify-stretch">
-						<Button class="mt-4 self-center" on:click={() => (selected = template.id)}>Use</Button>
+						<Button class="mt-4 self-center" on:click={() => (selected = index)}>Use</Button>
 						<div></div>
 						<div></div>
 						<div></div>
