@@ -38,6 +38,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"flowbite-svelte-blocks": "^1.1.0",
 		"flowbite-svelte-icons": "^1.4.0"
 	}
 }
