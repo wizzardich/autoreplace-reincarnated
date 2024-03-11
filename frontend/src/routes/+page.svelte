@@ -49,12 +49,24 @@
 		easing: sineIn
 	};
 
+	let isCreateMenuHidden = true;
+	// $: createTemplate = Template.empty();
+
 	const handleEdit = (t: Template) => {
 		isEditMenuHidden = false;
 		editable = data.templates.indexOf(t);
 		editableTemplate = t;
 	};
-	const handleCancel = () => {
+	const handleDelete = async (t: Template) => {
+		await onTemplateDelete(t);
+	};
+	const handleNewTemplate = () => {
+		isCreateMenuHidden = false;
+	};
+	const handleCancelCreate = () => {
+		isCreateMenuHidden = true;
+	};
+	const handleCancelEdit = () => {
 		isEditMenuHidden = true;
 	};
 	const handleNewReplacement = () => {
@@ -85,6 +97,19 @@
 			isEditMenuHidden = true;
 		} else {
 			console.error('Failed to edit template');
+		}
+	}
+
+	async function onTemplateDelete(template: Template) {
+		console.log('Template deleted', template);
+		const response = await fetch(`/templates/delete/${template.id}`, {
+			method: 'DELETE'
+		});
+		if (response.ok) {
+			console.log('Template deleted successfully');
+			data.templates = data.templates.filter((t) => t.id !== template.id);
+		} else {
+			console.error('Failed to delete template');
 		}
 	}
 </script>
@@ -124,13 +149,24 @@
 						<div></div>
 						<div></div>
 						<div></div>
-						<Button class="mt-4 place-content-end" on:click={() => handleEdit(template)}
-							>Edit</Button
+						<div></div>
+						<div></div>
+						<div></div>
+						<Button
+							class="mt-4 place-content-end"
+							color="light"
+							on:click={() => handleEdit(template)}>Edit</Button
+						>
+						<Button
+							class="ml-4 mt-4 place-content-end"
+							color="red"
+							on:click={() => handleDelete(template)}>Drop</Button
 						>
 					</div>
 				</AccordionItem>
 			{/each}
 		</Accordion>
+		<Button class="mt-4" color="alternative" on:click={handleNewTemplate}>+</Button>
 	</div>
 	<div class="col-span-2 row-span-2">
 		<Label for="input" class="mb-2 font-semibold"
@@ -206,7 +242,7 @@
 			<Button class="mb-4 w-10 space-x-4" on:click={handleNewReplacement}>+</Button>
 			<div class="bottom-0 left-0 flex w-full justify-center space-x-4 pb-4">
 				<Button type="submit" class="w-full">Save Changes</Button>
-				<Button class="w-full" color="light" on:click={handleCancel}>
+				<Button class="w-full" color="light" on:click={handleCancelEdit}>
 					<svg
 						aria-hidden="true"
 						class="-ml-1 h-5 w-5 sm:mr-1"
