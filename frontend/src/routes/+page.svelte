@@ -9,7 +9,6 @@
 		Hr,
 		Input,
 		Label,
-		Select,
 		Table,
 		TableBody,
 		TableBodyCell,
@@ -18,7 +17,6 @@
 		TableHeadCell,
 		Textarea
 	} from 'flowbite-svelte';
-	import { EditSolid } from 'flowbite-svelte-icons';
 	import { sineIn } from 'svelte/easing';
 
 	import type { PageData } from './$types';
@@ -35,7 +33,7 @@
 
 	export let data: PageData;
 
-	let selection = data.templates.map((_, id) => (id == 0 ? true : false));
+	let selection = data.templates.map((t, id) => (id == 0 ? true : false));
 	let content = '';
 
 	$: selected = data.templates[0].id;
@@ -45,22 +43,42 @@
 		data.templates.find((t) => t.id === selected)
 	);
 
-	let hidden = true;
+	let isEditMenuHidden = true;
+	let editableTemplate = data.templates[0];
 	let transitionParams = {
 		x: -320,
 		duration: 200,
 		easing: sineIn
 	};
-	let categories = [
-		{ value: '', name: 'Select category' },
-		{ value: 'TV', name: 'TV/Monitors' },
-		{ value: 'PC', name: 'PC' },
-		{ value: 'GA', name: 'Gaming/Console' },
-		{ value: 'PH', name: 'Phones' }
-	];
-	const handleCancel = () => {
-		hidden = true;
+
+	const handleEdit = (t: Template) => {
+		isEditMenuHidden = false;
+		editableTemplate = t;
 	};
+	const handleCancel = () => {
+		isEditMenuHidden = true;
+	};
+
+	async function onTemplateEdit(event: Event) {
+		event.preventDefault();
+		console.log('Template edited', editableTemplate);
+		const response = await fetch(`/templates/edit`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(editableTemplate)
+		});
+		if (response.ok) {
+			console.log('Template edited successfully');
+			data.templates = data.templates.map((t) =>
+				t.id === editableTemplate.id ? editableTemplate : t
+			);
+			isEditMenuHidden = true;
+		} else {
+			console.error('Failed to edit template');
+		}
+	}
 </script>
 
 <div class="grid grid-flow-col grid-cols-3 grid-rows-3 gap-4">
@@ -98,7 +116,9 @@
 						<div></div>
 						<div></div>
 						<div></div>
-						<Button class="mt-4 place-content-end" on:click={() => (hidden = false)}>Edit</Button>
+						<Button class="mt-4 place-content-end" on:click={() => handleEdit(template)}
+							>Edit</Button
+						>
 					</div>
 				</AccordionItem>
 			{/each}
@@ -106,7 +126,8 @@
 	</div>
 	<div class="col-span-2 row-span-2">
 		<Label for="input" class="mb-2 font-semibold"
-			>Text to process (using <b>{selectedTemplate.name}</b>):</Label
+			>Text to process{#if selectedTemplate}
+				(using <b>{selectedTemplate.name}</b>){/if}:</Label
 		>
 		<Textarea id="input" placeholder="Text to process" rows="20" bind:value={content} />
 		<Hr />
@@ -116,41 +137,60 @@
 </div>
 
 <Section name="crudcreatedrawer">
-	<Drawer transitionType="fly" {transitionParams} bind:hidden id="sidebar4">
+	<Drawer
+		transitionType="fly"
+		{transitionParams}
+		bind:hidden={isEditMenuHidden}
+		id="edit-sidebar"
+		width="w-160"
+	>
 		<div class="flex items-center">
 			<h5
 				id="drawer-label"
 				class="mb-6 inline-flex items-center text-base font-semibold uppercase text-gray-500 dark:text-gray-400"
 			>
-				New Product
+				Edit Replacement Template
 			</h5>
-			<CloseButton on:click={() => (hidden = true)} class="mb-4 dark:text-white" />
+			<CloseButton on:click={() => (isEditMenuHidden = true)} class="mb-4 dark:text-white" />
 		</div>
-		<form action="#" class="mb-6">
+		<form action="edit" on:submit|preventDefault={onTemplateEdit} class="mb-6">
 			<div class="mb-6">
 				<Label for="name" class="mb-2 block">Name</Label>
-				<Input id="name" name="name" required placeholder="Type product name" />
+				<Input
+					id="name"
+					name="name"
+					required
+					placeholder="Type product name"
+					bind:value={editableTemplate.name}
+				/>
 			</div>
-			<div class="mb-6">
-				<Label for="bland" class="mb-2 block">Bland</Label>
-				<Input id="bland" name="bland" required placeholder="Product brand" />
-			</div>
-			<div class="mb-6">
-				<Label for="price" class="mb-2 block">Price</Label>
-				<Input id="price" name="price" required placeholder="$2999" />
-			</div>
-			<div class="mb-6">
-				<Label
-					>Category
-					<Select class="mt-2" items={categories} bind:value={selected} />
-				</Label>
-			</div>
-			<div class="mb-6">
-				<Label for="brand" class="mb-2">Description</Label>
-				<Textarea id="message" placeholder="Enter event description here" rows="4" name="message" />
-			</div>
-			<div class="bottom-0 left-0 flex w-full justify-center space-x-4 pb-4 md:absolute md:px-4">
-				<Button type="submit" class="w-full">Add product</Button>
+			{#each editableTemplate.replacements as replacement, _}
+				<div>
+					<!--<div class="flex items-center justify-between">-->
+					<div class="flex w-full items-center justify-between space-x-4 pb-4">
+						<Label for="from" class="block">From</Label>
+						<Label for="to" class="block">To</Label>
+					</div>
+					<div class="flex w-full justify-center space-x-4 pb-4">
+						<Input
+							id="from"
+							name="from"
+							required
+							placeholder="Type text to replace"
+							bind:value={replacement.from}
+						/>
+						<Input
+							id="to"
+							name="to"
+							required
+							placeholder="Type replacement text"
+							bind:value={replacement.to}
+						/>
+					</div>
+				</div>
+			{/each}
+			<div class="bottom-0 left-0 flex w-full justify-center space-x-4 pb-4">
+				<Button type="submit" class="w-full">Save Changes</Button>
 				<Button class="w-full" color="light" on:click={handleCancel}>
 					<svg
 						aria-hidden="true"

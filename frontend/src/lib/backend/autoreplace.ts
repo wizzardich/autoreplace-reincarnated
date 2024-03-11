@@ -1,3 +1,5 @@
+import { env } from '$env/dynamic/private';
+
 export class Replacement {
     from: string;
     to: string;
@@ -34,6 +36,19 @@ export class BackendService {
     async fetchTemplateById(id: string) {
         return api<Template>(`${this.base}/templates/${id}`)
     }
+
+    async editTemplate(template: Template) {
+        console.log(template)
+        fetch(`${this.base}/templates/${template.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(template)
+        }).then(response => {
+            console.log(response)
+            if (!response.ok) {
+                throw new Error(response.statusText)
+            }
+        })
+    }
 }
 
 // For the "unwrapping" variation
@@ -46,4 +61,6 @@ function api<T>(url: string): Promise<T> {
         }
         return response.json() as Promise<T>
       })
-  }
+}
+
+export const Backend = new BackendService(env.SVC_AUTOREPLACE_BASE_URL);
