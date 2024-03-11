@@ -82,7 +82,7 @@
 			(r) => r.from !== '' && r.to !== ''
 		);
 		console.log('Template edited', editableTemplate);
-		const response = await fetch(`/templates/edit`, {
+		const response = await fetch(`/templates/${editableTemplate.id}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json'
@@ -102,7 +102,7 @@
 
 	async function onTemplateDelete(template: Template) {
 		console.log('Template deleted', template);
-		const response = await fetch(`/templates/delete/${template.id}`, {
+		const response = await fetch(`/templates/${template.id}`, {
 			method: 'DELETE'
 		});
 		if (response.ok) {

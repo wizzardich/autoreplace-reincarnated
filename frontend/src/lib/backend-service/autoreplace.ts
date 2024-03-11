@@ -18,12 +18,21 @@ export class BackendService {
     }
 
     async editTemplate(template: Template) {
-        console.log(template)
         fetch(`${this.base}/templates/${template.id}`, {
             method: 'PUT',
             body: JSON.stringify(template)
         }).then(response => {
             console.log(response)
+            if (!response.ok) {
+                throw new Error(response.statusText)
+            }
+        })
+    }
+
+    async deleteTemplate(id: string) {
+        fetch(`${this.base}/templates/${id}`, {
+            method: 'DELETE'
+        }).then(response => {
             if (!response.ok) {
                 throw new Error(response.statusText)
             }
