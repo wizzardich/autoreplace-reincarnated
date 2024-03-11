@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { Backend } from '$lib/backend/autoreplace';
+import { Backend } from '$lib/backend-service/autoreplace';
 
 export async function PUT({ request }) {
 	const template = await request.json();

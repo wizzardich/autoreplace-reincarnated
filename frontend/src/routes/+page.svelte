@@ -20,7 +20,7 @@
 	import { sineIn } from 'svelte/easing';
 
 	import type { PageData } from './$types';
-	import type { Template } from '$lib/backend/autoreplace';
+	import { Template } from '$lib/backend/domain';
 
 	function replaceText(input: string, template: Template | undefined) {
 		if (!template) return input;
@@ -33,18 +33,19 @@
 
 	export let data: PageData;
 
-	let selection = data.templates.map((t, id) => (id == 0 ? true : false));
+	let selection = data.templates.map((_, id) => (id == 0 ? true : false));
 	let content = '';
 
-	$: selected = data.templates[0].id;
+	let selected = data.templates[0].id;
 	$: selectedTemplate = data.templates.find((t) => t.id === selected);
 	$: processedContent = replaceText(
 		content,
 		data.templates.find((t) => t.id === selected)
 	);
 
+	let editable = 0;
+	$: editableTemplate = data.templates[editable];
 	let isEditMenuHidden = true;
-	let editableTemplate = data.templates[0];
 	let transitionParams = {
 		x: -320,
 		duration: 200,
@@ -53,14 +54,24 @@
 
 	const handleEdit = (t: Template) => {
 		isEditMenuHidden = false;
+		editable = data.templates.indexOf(t);
 		editableTemplate = t;
 	};
 	const handleCancel = () => {
 		isEditMenuHidden = true;
 	};
+	const handleNewReplacement = () => {
+		editableTemplate.replacements = [...editableTemplate.replacements, { from: '', to: '' }];
+	};
+	const handleDropReplacement = (index: number) => {
+		editableTemplate.replacements = editableTemplate.replacements.filter((_, i) => i !== index);
+	};
 
 	async function onTemplateEdit(event: Event) {
 		event.preventDefault();
+		editableTemplate.replacements = editableTemplate.replacements.filter(
+			(r) => r.from !== '' && r.to !== ''
+		);
 		console.log('Template edited', editableTemplate);
 		const response = await fetch(`/templates/edit`, {
 			method: 'PUT',
@@ -164,7 +175,7 @@
 					bind:value={editableTemplate.name}
 				/>
 			</div>
-			{#each editableTemplate.replacements as replacement, _}
+			{#each editableTemplate.replacements as replacement, index}
 				<div>
 					<!--<div class="flex items-center justify-between">-->
 					<div class="flex w-full items-center justify-between space-x-4 pb-4">
@@ -173,22 +184,29 @@
 					</div>
 					<div class="flex w-full justify-center space-x-4 pb-4">
 						<Input
-							id="from"
-							name="from"
+							id="from-{editableTemplate.id}-{index}"
+							name="from-{editableTemplate.id}-{index}"
 							required
 							placeholder="Type text to replace"
+							on:keypress={() => {
+								console.log(editableTemplate.id);
+							}}
 							bind:value={replacement.from}
 						/>
 						<Input
-							id="to"
-							name="to"
+							id="to-{editableTemplate.id}-{index}"
+							name="to-{editableTemplate.id}-{index}"
 							required
 							placeholder="Type replacement text"
 							bind:value={replacement.to}
 						/>
+						<Button class="w-10" on:click={() => handleDropReplacement(index)} color="alternative">
+							-
+						</Button>
 					</div>
 				</div>
 			{/each}
+			<Button class="mb-4 w-10 space-x-4" on:click={handleNewReplacement}>+</Button>
 			<div class="bottom-0 left-0 flex w-full justify-center space-x-4 pb-4">
 				<Button type="submit" class="w-full">Save Changes</Button>
 				<Button class="w-full" color="light" on:click={handleCancel}>
