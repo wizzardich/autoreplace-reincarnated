@@ -154,6 +154,8 @@ func (repo *TemplateMongoRepository) UpdateTemplate(id string, template domain.T
 	var dtoTemplate = dto.TemplateToDTO(template)
 
 	querier := func(collection *mongo.Collection, ctx *context.Context) error {
+		var objectID interface{} // this is horribly untypesafe, but this is all mongo's fault!
+		// TODO: I will do a wrapper later
 		objectID, err := primitive.ObjectIDFromHex(id)
 
 		if err != nil {
@@ -161,7 +163,7 @@ func (repo *TemplateMongoRepository) UpdateTemplate(id string, template domain.T
 				slog.String("id", id),
 				slog.String("error", err.Error()),
 			)
-			return err
+			objectID = id
 		}
 
 		payload := bson.M{}
