@@ -38,6 +38,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@sveltejs/adapter-node": "^5.0.1",
 		"flowbite-svelte-blocks": "^1.1.0",
 		"flowbite-svelte-icons": "^1.4.0"
 	}
