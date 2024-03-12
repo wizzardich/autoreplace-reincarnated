@@ -1,4 +1,4 @@
 node 20.11.1
 pnpm 8.15.3
-golang 1.22.0
+golang 1.22.1
 task 3.34.1
