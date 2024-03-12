@@ -11,13 +11,18 @@ import (
 )
 
 func main() {
-	mux := http.NewServeMux()
+	routerHost := os.Getenv("MONGO_HOST")
+	if routerHost == "" {
+		routerHost = "localhost"
+	}
 
 	loggerOpts := &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, loggerOpts))
-	mongoDriver := inframongo.NewMongoDriver(logger, "localhost")
+	logger.Info("initializing mongo driver", slog.String("router", routerHost))
+
+	mongoDriver := inframongo.NewMongoDriver(logger, routerHost)
 	mongoTemplateRepository := infra.NewTemplateMongoRepository(logger, mongoDriver)
 
 	controller := infra.NewController(
@@ -29,6 +34,8 @@ func main() {
 		app.NewDeleteTemplateUsecase(logger, mongoTemplateRepository),
 	)
 
+	mux := http.NewServeMux()
+
 	mux.HandleFunc("GET /templates/", controller.ListTemplates)
 	mux.HandleFunc("GET /templates/{id}", controller.GetTemplateByID)
 	mux.HandleFunc("POST /templates/", controller.StoreTemplate)
@@ -36,5 +43,5 @@ func main() {
 	mux.HandleFunc("DELETE /templates/{id}", controller.DeleteTemplate)
 
 	logger.Info("server starting at :8090")
-	http.ListenAndServe("localhost:8090", mux)
+	http.ListenAndServe(":8090", mux)
 }
