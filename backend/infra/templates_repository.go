@@ -141,7 +141,7 @@ func (repo *TemplateMongoRepository) StoreTemplate(template domain.Template) err
 		return err
 	}
 
-	err := repo.driver.Process(querier)
+	err := repo.driver.Process(querier) // TODO: at least return the ID of the inserted template
 
 	if err != nil {
 		return err
