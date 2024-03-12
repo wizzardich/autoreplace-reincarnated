@@ -19,6 +19,10 @@ export class Template {
         this.replacements = replacements;
     }
 
+    static empty() {
+        return new Template('', '', []);
+    }
+
     addReplacement(from: string, to: string) {
         this.replacements.push(new Replacement(from, to));
     }

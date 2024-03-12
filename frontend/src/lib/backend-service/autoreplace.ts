@@ -38,6 +38,17 @@ export class BackendService {
             }
         })
     }
+
+    async createTemplate(template: Template) {
+        fetch(`${this.base}/templates/`, {
+            method: 'POST',
+            body: JSON.stringify(template)
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error(response.statusText)
+            }
+        })
+    }
 }
 
 // For the "unwrapping" variation

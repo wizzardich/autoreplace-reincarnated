@@ -50,7 +50,7 @@
 	};
 
 	let isCreateMenuHidden = true;
-	// $: createTemplate = Template.empty();
+	$: createTemplate = Template.empty();
 
 	const handleEdit = (t: Template) => {
 		isEditMenuHidden = false;
@@ -74,6 +74,12 @@
 	};
 	const handleDropReplacement = (index: number) => {
 		editableTemplate.replacements = editableTemplate.replacements.filter((_, i) => i !== index);
+	};
+	const handleNewCreateReplacement = () => {
+		createTemplate.replacements = [...createTemplate.replacements, { from: '', to: '' }];
+	};
+	const handleDropCreateReplacement = (index: number) => {
+		createTemplate.replacements = createTemplate.replacements.filter((_, i) => i !== index);
 	};
 
 	async function onTemplateEdit(event: Event) {
@@ -110,6 +116,27 @@
 			data.templates = data.templates.filter((t) => t.id !== template.id);
 		} else {
 			console.error('Failed to delete template');
+		}
+	}
+
+	async function onTemplateCreate(event: Event) {
+		event.preventDefault();
+		createTemplate.replacements = createTemplate.replacements.filter(
+			(r) => r.from !== '' && r.to !== ''
+		);
+		const response = await fetch('/templates', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(createTemplate)
+		});
+		if (response.ok) {
+			console.log('Template created successfully');
+			data.templates = [...data.templates, createTemplate];
+			isCreateMenuHidden = true;
+		} else {
+			console.error('Failed to create template');
 		}
 	}
 </script>
@@ -221,9 +248,6 @@
 							name="from-{editableTemplate.id}-{index}"
 							required
 							placeholder="Type text to replace"
-							on:keypress={() => {
-								console.log(editableTemplate.id);
-							}}
 							bind:value={replacement.from}
 						/>
 						<Input
@@ -239,10 +263,93 @@
 					</div>
 				</div>
 			{/each}
-			<Button class="mb-4 w-10 space-x-4" on:click={handleNewReplacement}>+</Button>
+			<Button class="mb-4 w-10 space-x-4" on:click={() => handleNewReplacement()}>+</Button>
 			<div class="bottom-0 left-0 flex w-full justify-center space-x-4 pb-4">
 				<Button type="submit" class="w-full">Save Changes</Button>
 				<Button class="w-full" color="light" on:click={handleCancelEdit}>
+					<svg
+						aria-hidden="true"
+						class="-ml-1 h-5 w-5 sm:mr-1"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/></svg
+					>
+					Cancel
+				</Button>
+			</div>
+		</form>
+	</Drawer>
+
+	<Drawer
+		transitionType="fly"
+		{transitionParams}
+		bind:hidden={isCreateMenuHidden}
+		id="edit-sidebar"
+		width="w-160"
+	>
+		<div class="flex items-center">
+			<h5
+				id="drawer-label"
+				class="mb-6 inline-flex items-center text-base font-semibold uppercase text-gray-500 dark:text-gray-400"
+			>
+				Create Replacement Template
+			</h5>
+			<CloseButton on:click={() => (isCreateMenuHidden = true)} class="mb-4 dark:text-white" />
+		</div>
+		<form action="create" on:submit|preventDefault={onTemplateCreate} class="mb-6">
+			<div class="mb-6">
+				<Label for="name" class="mb-2 block">Name</Label>
+				<Input
+					id="name"
+					name="name"
+					required
+					placeholder="Type template name"
+					bind:value={createTemplate.name}
+				/>
+			</div>
+			{#each createTemplate.replacements as replacement, index}
+				<div>
+					<!--<div class="flex items-center justify-between">-->
+					<div class="flex w-full items-center justify-between space-x-4 pb-4">
+						<Label for="from" class="block">From</Label>
+						<Label for="to" class="block">To</Label>
+					</div>
+					<div class="flex w-full justify-center space-x-4 pb-4">
+						<Input
+							id="from-new-{index}"
+							name="from-new-{index}"
+							required
+							placeholder="Type text to replace"
+							bind:value={replacement.from}
+						/>
+						<Input
+							id="to-new-{index}"
+							name="to-new-{index}"
+							required
+							placeholder="Type replacement text"
+							bind:value={replacement.to}
+						/>
+						<Button
+							class="w-10"
+							on:click={() => handleDropCreateReplacement(index)}
+							color="alternative"
+						>
+							-
+						</Button>
+					</div>
+				</div>
+			{/each}
+			<Button class="mb-4 w-10 space-x-4" on:click={() => handleNewCreateReplacement()}>+</Button>
+			<div class="bottom-0 left-0 flex w-full justify-center space-x-4 pb-4">
+				<Button type="submit" class="w-full">Create Template</Button>
+				<Button class="w-full" color="light" on:click={handleCancelCreate}>
 					<svg
 						aria-hidden="true"
 						class="-ml-1 h-5 w-5 sm:mr-1"
