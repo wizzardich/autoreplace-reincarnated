@@ -131,9 +131,10 @@
 			},
 			body: JSON.stringify(createTemplate)
 		});
+		const createdTemplate: Template = await response.json();
 		if (response.ok) {
 			console.log('Template created successfully');
-			data.templates = [...data.templates, createTemplate];
+			data.templates = [...data.templates, createdTemplate];
 			isCreateMenuHidden = true;
 		} else {
 			console.error('Failed to create template');

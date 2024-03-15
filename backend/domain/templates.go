@@ -7,13 +7,15 @@ var (
 	ErrTemplateAlreadyExists = errors.New("template already exists")
 )
 
+type IDString = string
+
 type Replacement struct {
 	From string
 	To   string
 }
 
 type Template struct {
-	ID           string
+	ID           IDString
 	Name         string
 	Replacements []Replacement
 }
@@ -21,8 +23,8 @@ type Template struct {
 type TemplateRepository interface {
 	FindAll() ([]Template, error)
 	FindByName(name string) (Template, error)
-	FindByID(id string) (Template, error)
-	StoreTemplate(template Template) error
-	UpdateTemplate(id string, updateTemplate Template) error
-	DeleteTemplate(id string) error
+	FindByID(id IDString) (Template, error)
+	StoreTemplate(template Template) (*IDString, error)
+	UpdateTemplate(id IDString, updateTemplate Template) error
+	DeleteTemplate(id IDString) error
 }

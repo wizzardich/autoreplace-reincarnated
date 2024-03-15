@@ -18,19 +18,19 @@ func NewStoreTemplateUsecase(logger *slog.Logger, repo domain.TemplateRepository
 	}
 }
 
-func (u *StoreTemplateUsecase) Execute(template domain.Template) error {
+func (u *StoreTemplateUsecase) Execute(template domain.Template) (*domain.IDString, error) {
 	_, err := u.repo.FindByName(template.Name)
 
 	if err != domain.ErrTemplateNotFound {
-		return domain.ErrTemplateAlreadyExists
+		return nil, domain.ErrTemplateAlreadyExists
 	}
 
-	err = u.repo.StoreTemplate(template)
+	id, err := u.repo.StoreTemplate(template)
 
 	if err != nil {
 		u.logger.Error("could not save template")
-		return err
+		return nil, err
 	}
 
-	return nil
+	return id, nil
 }

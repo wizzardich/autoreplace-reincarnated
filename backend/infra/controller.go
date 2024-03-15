@@ -107,7 +107,7 @@ func (c *Controller) StoreTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.storeTemplateUsecase.Execute(dto.TemplateFromDTO(template))
+	id, err := c.storeTemplateUsecase.Execute(dto.TemplateFromDTO(template))
 
 	if err == domain.ErrTemplateAlreadyExists {
 		c.logger.Warn("template already exists", slog.String("template", template.Name))
@@ -123,7 +123,14 @@ func (c *Controller) StoreTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	storedTemplate := dto.Template{
+		ID:           *id,
+		Name:         template.Name,
+		Replacements: template.Replacements,
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	util.WriteJSON(w, storedTemplate)
 }
 
 func (c *Controller) UpdateTemplate(w http.ResponseWriter, r *http.Request) {

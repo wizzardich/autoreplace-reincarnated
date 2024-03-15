@@ -87,7 +87,7 @@ func (repo *TemplateMongoRepository) FindByName(name string) (domain.Template, e
 	return dto.TemplateFromDTO(result), nil
 }
 
-func (repo *TemplateMongoRepository) FindByID(id string) (domain.Template, error) {
+func (repo *TemplateMongoRepository) FindByID(id domain.IDString) (domain.Template, error) {
 	var result dto.Template
 
 	querier := func(collection *mongo.Collection, ctx *context.Context) error {
@@ -125,32 +125,36 @@ func (repo *TemplateMongoRepository) FindByID(id string) (domain.Template, error
 	return dto.TemplateFromDTO(result), nil
 }
 
-func (repo *TemplateMongoRepository) StoreTemplate(template domain.Template) error {
+func (repo *TemplateMongoRepository) StoreTemplate(template domain.Template) (*domain.IDString, error) {
 	var dtoTemplate = dto.TemplateToDTO(template)
+	var insertedID domain.IDString
 
 	querier := func(collection *mongo.Collection, ctx *context.Context) error {
-		_, err := collection.InsertOne(*ctx, dtoTemplate)
+		result, err := collection.InsertOne(*ctx, dtoTemplate)
 
 		if err != nil {
 			repo.logger.Error("could not insert the template from the database",
 				slog.String("template", fmt.Sprintf("%v", dtoTemplate)),
 				slog.String("error", err.Error()),
 			)
+			return err
 		}
 
-		return err
+		insertedID = result.InsertedID.(primitive.ObjectID).Hex()
+
+		return nil
 	}
 
 	err := repo.driver.Process(querier) // TODO: at least return the ID of the inserted template
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &insertedID, nil
 }
 
-func (repo *TemplateMongoRepository) UpdateTemplate(id string, template domain.Template) error {
+func (repo *TemplateMongoRepository) UpdateTemplate(id domain.IDString, template domain.Template) error {
 	var dtoTemplate = dto.TemplateToDTO(template)
 
 	querier := func(collection *mongo.Collection, ctx *context.Context) error {
@@ -195,7 +199,7 @@ func (repo *TemplateMongoRepository) UpdateTemplate(id string, template domain.T
 	return nil
 }
 
-func (repo *TemplateMongoRepository) DeleteTemplate(id string) error {
+func (repo *TemplateMongoRepository) DeleteTemplate(id domain.IDString) error {
 	querier := func(collection *mongo.Collection, ctx *context.Context) error {
 		objectID, err := primitive.ObjectIDFromHex(id)
 

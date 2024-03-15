@@ -5,7 +5,7 @@ import { Backend } from '$lib/backend-service/autoreplace';
 export async function POST({ request }) {
 	const template = await request.json();
 
-	await Backend.createTemplate(template)
+	var createdTemplate = await Backend.createTemplate(template)
 
-	return new Response(null, { status: 201 })
+	return json(createdTemplate, { status: 201 })
 }

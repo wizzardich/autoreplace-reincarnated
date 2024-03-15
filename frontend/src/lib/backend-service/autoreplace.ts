@@ -22,7 +22,6 @@ export class BackendService {
             method: 'PUT',
             body: JSON.stringify(template)
         }).then(response => {
-            console.log(response)
             if (!response.ok) {
                 throw new Error(response.statusText)
             }
@@ -40,13 +39,14 @@ export class BackendService {
     }
 
     async createTemplate(template: Template) {
-        fetch(`${this.base}/templates/`, {
+        return fetch(`${this.base}/templates/`, {
             method: 'POST',
             body: JSON.stringify(template)
         }).then(response => {
             if (!response.ok) {
                 throw new Error(response.statusText)
             }
+            return response.json() as Promise<Template>
         })
     }
 }
