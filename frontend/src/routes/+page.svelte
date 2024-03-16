@@ -4,6 +4,7 @@
 		Accordion,
 		AccordionItem,
 		Button,
+		Checkbox,
 		CloseButton,
 		Drawer,
 		Hr,
@@ -21,12 +22,26 @@
 
 	import type { PageData } from './$types';
 	import { Template } from '$lib/backend/domain';
+	import type { Modifier } from '$lib/modifiers/common';
+	import { NewLineAugmenter } from '$lib/modifiers/text';
+
+	const augmenters: Modifier<string>[] = [
+		{
+			enabled: true,
+			action: NewLineAugmenter
+		}
+	];
 
 	function replaceText(input: string, template: Template | undefined) {
 		if (!template) return input;
 		let output = input;
 		for (const replacement of template.replacements) {
 			output = output.replaceAll(replacement.from, replacement.to);
+		}
+		for (const augmenter of augmenters) {
+			if (augmenter.enabled) {
+				output = augmenter.action(output);
+			}
 		}
 		return output;
 	}
@@ -80,6 +95,10 @@
 	};
 	const handleDropCreateReplacement = (index: number) => {
 		createTemplate.replacements = createTemplate.replacements.filter((_, i) => i !== index);
+	};
+	const handleAddMarkdownLineBreaksCheckbox = () => {
+		augmenters[0].enabled = !augmenters[0].enabled;
+		processedContent = replaceText(content, selectedTemplate);
 	};
 
 	async function onTemplateEdit(event: Event) {
@@ -202,6 +221,9 @@
 				(using <b>{selectedTemplate.name}</b>){/if}:</Label
 		>
 		<Textarea id="input" placeholder="Text to process" rows="20" bind:value={content} />
+		<Checkbox checked on:click={handleAddMarkdownLineBreaksCheckbox}
+			>Add Markdown Line Breaks</Checkbox
+		>
 		<Hr />
 		<Label for="processed" class="mb-2 font-semibold">Text with replacements:</Label>
 		<Textarea id="processed" placeholder="Processed text" rows="20" bind:value={processedContent} />
